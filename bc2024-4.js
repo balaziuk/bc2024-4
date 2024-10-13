@@ -41,7 +41,6 @@ const server = http.createServer(async (req, res) => {
             }
         });
     } else if (req.method === 'GET') {
-        // Обробляємо GET-запит для отримання картинки
         try {
           const image = await fs.readFile(filePath);
           res.writeHead(200, { 'Content-Type': 'image/jpeg' });
