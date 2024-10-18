@@ -21,6 +21,12 @@ const server = http.createServer(async (req, res) => {
     const statusCode = req.url.slice(1); 
     const filePath = getCachedFilePath(statusCode);
 
+    if (req.method === 'GET' && req.url === '/') {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end('Welcome to the proxy server');
+        return;
+    }
+    
     if (req.method === 'PUT') {
         let body = [];
     
@@ -40,15 +46,24 @@ const server = http.createServer(async (req, res) => {
                 res.end('Internal Server Error');
             }
         });
+
     } else if (req.method === 'GET') {
-        // Обробляємо GET-запит для отримання картинки
         try {
           const image = await fs.readFile(filePath);
           res.writeHead(200, { 'Content-Type': 'image/jpeg' });
           res.end(image);
         } catch (err) {
           res.writeHead(404, { 'Content-Type': 'text/plain' });
-          res.end('Not Found');
+          res.end(`Image not found for status code ${statusCode}. Please check if the status code is correct.`);
+        }
+    } else if (req.method === 'DELETE') {
+        try{
+            await fs.unlink(filePath);
+            res.writeHead(200, { 'Content-Type': 'text/plain' });
+            res.end('Deleted');
+        } catch (err) {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end('Not Found');
         }
     } else {
         res.writeHead(405, { 'Content-Type': 'text/plain' });
