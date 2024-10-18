@@ -26,7 +26,7 @@ const server = http.createServer(async (req, res) => {
         res.end('Welcome to the proxy server');
         return;
     }
-    
+
     if (req.method === 'PUT') {
         let body = [];
     
@@ -70,7 +70,6 @@ const server = http.createServer(async (req, res) => {
         res.end('Method Not Allowed');
     }
 });
-
 
 server.listen(port, host, () => {
     console.log(`Server running at http://${host}:${port}/`);
