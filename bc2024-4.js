@@ -2,10 +2,12 @@ const http = require('http');
 const { Command } =  require('commander');
 const fs =  require('fs').promises;
 const path = require('path');
+const superagent =  require('superagent');
+
 
 const program = new Command();
 program 
-.requiredOption('-h, --host <host>', 'serverhost')
+.requiredOption('-h, --host <host>', 'server host')
 .requiredOption('-p, --port <port>', 'server port')
 .requiredOption('-c, --cache <cache>', 'cache directory');
 
@@ -17,6 +19,15 @@ const cache =  options.cache;
 
 const getCachedFilePath = (statusCode) => path.join(cache, `${statusCode}.jpg`);
 
+const getCatimg = async (statusCode) => {
+    const url = `https://http.cat/${statusCode}`;
+    try {
+        const response = await superagent.get(url);
+        return  response.body;
+    } catch (error) {
+        throw new Error ('Image not found')
+    }
+}
 const server = http.createServer(async (req, res) => {
     const statusCode = req.url.slice(1); 
     const filePath = getCachedFilePath(statusCode);
@@ -53,8 +64,15 @@ const server = http.createServer(async (req, res) => {
           res.writeHead(200, { 'Content-Type': 'image/jpeg' });
           res.end(image);
         } catch (err) {
-          res.writeHead(404, { 'Content-Type': 'text/plain' });
-          res.end(`Image not found for status code ${statusCode}. Please check if the status code is correct.`);
+        try {
+            const imageBuffer =  await getCatimg(statusCode);
+            await fs.writeFile(filePath, imageBuffer);
+            res.writeHead(200, { 'Content-Type': 'image/jpeg' });
+            res.end(imageBuffer);
+        }   catch (error) {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end(`Image not found for status code ${statusCode}.`);
+        }
         }
     } else if (req.method === 'DELETE') {
         try{
